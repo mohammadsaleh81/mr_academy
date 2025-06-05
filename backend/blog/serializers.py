@@ -204,7 +204,11 @@ class ArticleLikeSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']
 
     def validate(self, data):
-        user = self.context['request'].user
+        request = self.context.get('request')
+        if not request or not hasattr(request, 'user') or not request.user:
+            raise serializers.ValidationError("Authentication required.")
+        
+        user = request.user
         article = data['article']
         
         if ArticleLike.objects.filter(user=user, article=article).exists():
@@ -221,7 +225,11 @@ class ArticleBookmarkSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']
 
     def validate(self, data):
-        user = self.context['request'].user
+        request = self.context.get('request')
+        if not request or not hasattr(request, 'user') or not request.user:
+            raise serializers.ValidationError("Authentication required.")
+        
+        user = request.user
         article = data['article']
         
         if ArticleBookmark.objects.filter(user=user, article=article).exists():

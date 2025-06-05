@@ -250,7 +250,7 @@ class ArticleLikeListCreateView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = ArticleLikeSerializer(data=request.data)
+        serializer = ArticleLikeSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -291,7 +291,7 @@ class ArticleBookmarkListCreateView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = ArticleBookmarkSerializer(data=request.data)
+        serializer = ArticleBookmarkSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
