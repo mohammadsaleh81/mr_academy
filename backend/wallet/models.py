@@ -32,6 +32,10 @@ class Wallet(models.Model):
 
         self.balance += amount
         self.save(update_fields=['balance', 'updated_at'])
+        
+        # Sync with user.wallet_balance field
+        self.user.wallet_balance = self.balance
+        self.user.save(update_fields=['wallet_balance'])
 
         # Create transaction record
         Transaction.objects.create(
@@ -55,6 +59,10 @@ class Wallet(models.Model):
 
         self.balance -= amount
         self.save(update_fields=['balance', 'updated_at'])
+        
+        # Sync with user.wallet_balance field
+        self.user.wallet_balance = self.balance
+        self.user.save(update_fields=['wallet_balance'])
 
         # Create transaction record
         Transaction.objects.create(

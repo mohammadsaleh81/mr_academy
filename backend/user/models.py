@@ -170,18 +170,5 @@ class OTP(models.Model):
         verbose_name_plural = _("کدهای یکبار مصرف")
 
 
-@receiver(post_save, sender=User)
-def create_user_wallet(sender, instance, created, **kwargs):
-    """Create a wallet transaction record when user's wallet balance changes"""
-    if not created and instance.wallet_balance > 0:
-        previous_balance = sender.objects.get(pk=instance.pk).wallet_balance
-        if instance.wallet_balance != previous_balance:
-            amount = instance.wallet_balance - previous_balance
-            transaction_type = 'deposit' if amount > 0 else 'withdraw'
-            WalletTransaction.objects.create(
-                user=instance,
-                amount=abs(amount),
-                transaction_type=transaction_type,
-                description=_('تغییر موجودی کیف پول')
-            )
+# The wallet creation receiver is handled in wallet/models.py
 

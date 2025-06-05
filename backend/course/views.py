@@ -253,3 +253,176 @@ class UserCoursesView(APIView):
         courses = [enrollment.course for enrollment in enrollments]
         serializer = CourseListSerializer(courses, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+# New APIs for Learn Page
+class LessonDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, course_pk, lesson_pk):
+        # Verify user is enrolled in the course
+        enrollment = get_object_or_404(
+            Enrollment, 
+            user=request.user, 
+            course_id=course_pk
+        )
+        
+        lesson = get_object_or_404(
+            Lesson, 
+            pk=lesson_pk, 
+            chapter__course_id=course_pk
+        )
+        
+        # Check if lesson is accessible (enrolled or free preview)
+        if not lesson.is_free_preview and not enrollment:
+            return Response(
+                {"detail": "برای دسترسی به این درس باید در دوره ثبت‌نام کنید"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = LessonSerializer(lesson, context={'request': request})
+        return Response(serializer.data)
+
+class LessonProgressUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, course_pk, lesson_pk):
+        # Verify enrollment
+        enrollment = get_object_or_404(
+            Enrollment,
+            user=request.user,
+            course_id=course_pk
+        )
+        
+        lesson = get_object_or_404(
+            Lesson,
+            pk=lesson_pk,
+            chapter__course_id=course_pk
+        )
+        
+        # Get or create lesson progress
+        progress, created = LessonProgress.objects.get_or_create(
+            user=request.user,
+            lesson=lesson,
+            defaults={'status': 'not_started'}
+        )
+        
+        serializer = LessonProgressUpdateSerializer(
+            progress, 
+            data=request.data, 
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(LessonProgressSerializer(progress).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LessonMarkCompleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, course_pk, lesson_pk):
+        # Verify enrollment
+        enrollment = get_object_or_404(
+            Enrollment,
+            user=request.user,
+            course_id=course_pk
+        )
+        
+        lesson = get_object_or_404(
+            Lesson,
+            pk=lesson_pk,
+            chapter__course_id=course_pk
+        )
+        
+        # Get or create lesson progress
+        progress, created = LessonProgress.objects.get_or_create(
+            user=request.user,
+            lesson=lesson,
+            defaults={'status': 'not_started'}
+        )
+        
+        # Mark as completed
+        progress.mark_completed()
+        
+        return Response({
+            "message": "درس با موفقیت تکمیل شد",
+            "progress": LessonProgressSerializer(progress).data
+        })
+
+class NextLessonView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, course_pk):
+        course = get_object_or_404(Course, pk=course_pk)
+        
+        # Verify enrollment
+        enrollment = get_object_or_404(
+            Enrollment,
+            user=request.user,
+            course=course
+        )
+        
+        course_progress = CourseProgress(request.user, course)
+        next_lesson = course_progress.get_next_lesson()
+        
+        if next_lesson:
+            return Response({
+                "lesson": LessonSerializer(next_lesson, context={'request': request}).data
+            })
+        else:
+            return Response({
+                "message": "تمام دروس تکمیل شده‌اند",
+                "lesson": None
+            })
+
+class CourseLearnDataView(APIView):
+    """
+    Combined API to get all data needed for Learn page
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, course_pk):
+        course = get_object_or_404(Course, pk=course_pk)
+        
+        # Verify enrollment
+        enrollment = get_object_or_404(
+            Enrollment,
+            user=request.user,
+            course=course
+        )
+        
+        # Get course with chapters and lessons
+        chapters = course.chapters.all().prefetch_related(
+            'lessons', 
+            'lessons__progress'
+        )
+        
+        # Get user progress
+        course_progress = CourseProgress(request.user, course)
+        next_lesson = course_progress.get_next_lesson()
+        
+        # Prepare response data
+        data = {
+            'course': {
+                'id': course.id,
+                'title': course.title,
+                'description': course.description,
+                'instructor': course.instructor.get_full_name(),
+                'thumbnail': course.thumbnail.url if course.thumbnail else None,
+                'total_lessons': course.get_total_lessons(),
+                'total_duration': course.get_total_duration(),
+            },
+            'chapters': ChapterSerializer(chapters, many=True, context={'request': request}).data,
+            'user_progress': {
+                'completion_percentage': course_progress.completion_percentage,
+                'completed_lessons': course_progress.completed_lessons,
+                'total_lessons': course_progress.total_lessons,
+                'watched_duration': course_progress.watched_duration,
+                'total_duration': course_progress.total_duration,
+                'last_activity': course_progress.last_activity,
+            },
+            'next_lesson': LessonSerializer(next_lesson, context={'request': request}).data if next_lesson else None,
+            'enrollment': EnrollmentSerializer(enrollment).data
+        }
+        
+        return Response(data)

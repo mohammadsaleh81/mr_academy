@@ -27,6 +27,15 @@ urlpatterns = [
     path('courses/<slug:slug>/', views.CourseDetailView.as_view(), name='course-detail'),
     path('courses/<int:course_id>/', views.CourseDetailView.as_view(), name='course-detail-by-id'),
 
+    # Learn Page APIs - NEW 
+    path('courses/<int:course_pk>/learn/', views.CourseLearnDataView.as_view(), name='course-learn-data'),
+    
+    # Individual lesson APIs for Learn page - NEW
+    path('courses/<int:course_pk>/lessons/<int:lesson_pk>/', views.LessonDetailView.as_view(), name='lesson-detail'),
+    path('courses/<int:course_pk>/lessons/<int:lesson_pk>/progress/', views.LessonProgressUpdateView.as_view(), name='lesson-progress-update'),
+    path('courses/<int:course_pk>/lessons/<int:lesson_pk>/complete/', views.LessonMarkCompleteView.as_view(), name='lesson-mark-complete'),
+    path('courses/<int:course_pk>/next-lesson/', views.NextLessonView.as_view(), name='next-lesson'),
+
     # Chapter URLs
     # path('courses/<slug:course_slug>/chapters/', views.ChapterListCreateView.as_view(), name='chapter-list'),
     # path('courses/<slug:course_slug>/chapters/<int:pk>/', views.ChapterDetailView.as_view(), name='chapter-detail'),

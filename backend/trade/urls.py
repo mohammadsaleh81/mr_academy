@@ -31,6 +31,7 @@ urlpatterns = [
     path('crs/', include('course.urls')),
     path('user/', include('user.urls')),
     path('wallet/', include('wallet.urls', namespace='wallet')),
+    path('order/', include('order.urls', namespace='order')),
     path("verify/", VerifyView.as_view(), ),
     path("create/", CreatePayment.as_view(), ),
 
