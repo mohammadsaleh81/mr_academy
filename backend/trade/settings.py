@@ -339,5 +339,5 @@ ZP_API_VERIFY = "https://sandbox.zarinpal.com/pg/v4/payment/verify.json"
 ZP_API_STARTPAY = "https://sandbox.zarinpal.com/pg/StartPay/"
 
 SMS_KEY = "OWYxMTZkZDUtOTY5Ni00NWZiLTllNGYtMjJjYzZlYTQ0ODk2NTczNDU5MDUwZWU1YjkyYjRkY2QyM2VhNTUwZWU4ZjI"
-CALLBACK_URL = 'http://91.99.49.130:8000/pay/verify/'
+CALLBACK_URL = 'http://91.99.49.130:8081/payment-verify'
 
