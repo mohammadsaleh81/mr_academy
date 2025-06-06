@@ -88,6 +88,7 @@ class CourseAdmin(ModelAdmin):
                 'tags',
 
                 'description',
+                'thumbnail',
 
 
             ),

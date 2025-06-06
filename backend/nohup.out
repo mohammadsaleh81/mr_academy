@@ -1,0 +1,23 @@
+Watching for file changes with StatReloader
+/root/academy/backend/venv/lib/python3.12/site-packages/rest_framework/fields.py:992: UserWarning: min_value should be an integer or Decimal instance.
+  warnings.warn("min_value should be an integer or Decimal instance.")
+System check identified some issues:
+
+WARNINGS:
+?: (staticfiles.W004) The directory '/root/academy/backend/templates/static' in the STATICFILES_DIRS setting does not exist.
+
+System check identified 1 issue (0 silenced).
+Performing system checks...
+
+
+You have 1 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): wallet.
+Run 'python manage.py migrate' to apply them.
+June 05, 2025 - 08:24:31
+Django version 4.2, using settings 'trade.settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+
+Unknown command: "ru"
+
+To see a list of supported npm commands, run:
+  npm help

@@ -1,30 +1,10 @@
-import requests
 import json
-from django.conf import settings
+
+import requests
 from datetime import datetime, timedelta
 import time
+
 import pytz
-
-
-
-def send_otp(phone, otp):
-    url = "https://api2.ippanel.com/api/v1/sms/pattern/normal/send"
-
-    payload = json.dumps({
-        "code": "w36asdmxr5alzk8",
-        "recipient": phone,
-        "variable": {
-        "verification-code": otp
-        }
-    })
-
-    headers = {
-        'apikey': 'apikey {}'.format(settings.SMS_KEY),
-        'Content-Type': 'application/json'
-    }
-
-    response = requests.request("POST", url, headers=headers, data=payload)
-
 
 def send_sms(phone_number, otp):
     headers = {
@@ -53,7 +33,7 @@ def send_sms(phone_number, otp):
 
 
 
-# send_sms("+989352554850", "12345")
+send_sms("+989352554850", "12345")
 
 # time.sleep(10)
 #

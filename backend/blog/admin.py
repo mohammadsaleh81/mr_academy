@@ -298,7 +298,7 @@ class VideoAdmin(BaseMediaAdmin):
             'classes': ('tab',),
         }),
         (_('Video'), {
-            'fields': ('video_type', 'video_url', 'video_file', 'duration', 'is_premium'),
+            'fields': ('video_type','video_embed', 'video_url', 'video_file', 'duration', 'is_premium'),
             'classes': ('tab',),
         }),
         (_('Publishing'), {

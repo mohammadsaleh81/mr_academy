@@ -60,7 +60,7 @@ INSTALLED_APPS = UNFOLD_APPS +[
     'course.apps.CourseConfig',
     'order.apps.OrderConfig',
     'wallet.apps.WalletConfig',
-    # 'payment.apps.PaymentConfig',
+    'payment.apps.PaymentConfig',
 
 ]
 
@@ -337,5 +337,7 @@ MERCHANT_ID = "7580cc08-b6f3-43a3-af45-5eea2c53aa44"
 ZP_API_REQUEST = "https://sandbox.zarinpal.com/pg/v4/payment/request.json"
 ZP_API_VERIFY = "https://sandbox.zarinpal.com/pg/v4/payment/verify.json"
 ZP_API_STARTPAY = "https://sandbox.zarinpal.com/pg/StartPay/"
-CALLBACK_URL = 'http://localhost:8000/verify/'
+
+SMS_KEY = "OWYxMTZkZDUtOTY5Ni00NWZiLTllNGYtMjJjYzZlYTQ0ODk2NTczNDU5MDUwZWU1YjkyYjRkY2QyM2VhNTUwZWU4ZjI"
+CALLBACK_URL = 'http://91.99.49.130:8000/pay/verify/'
 

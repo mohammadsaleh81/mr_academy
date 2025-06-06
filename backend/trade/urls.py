@@ -23,17 +23,17 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from payments.views import VerifyView, CreatePayment
+from payment.views import VerifyView, CreatePayment
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('content/', include('blog.urls')),
     path('crs/', include('course.urls')),
     path('user/', include('user.urls')),
+    path('pay/', include('payment.urls')),
     path('wallet/', include('wallet.urls', namespace='wallet')),
     path('order/', include('order.urls', namespace='order')),
-    path("verify/", VerifyView.as_view(), ),
-    path("create/", CreatePayment.as_view(), ),
+
 
                   # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

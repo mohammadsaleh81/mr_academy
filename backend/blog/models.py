@@ -302,6 +302,16 @@ class Video(BaseMedia):
         verbose_name = _('ویدیو')
         verbose_name_plural = _('ویدیوها')
 
+    def create_video_embed(self):
+        tag = '<iframe src="{}" width="640" height="360" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen="true"> </iframe>'.format(self.video_url)
+        return tag
+
+    def save(self, *args, **kwargs):
+        if self.video_url:
+            self.video_embed = self.create_video_embed()
+        super().save(*args, **kwargs)
+    
+
 
 class File(BaseMedia):
     FILE_TYPES = (
