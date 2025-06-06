@@ -173,7 +173,7 @@ class WalletPaymentVerifyView(APIView):
                             try:
                                 wallet.deposit(
                                     amount=payment_instance.amount,
-                                    description=f"شارژ کیف پول از طریق درگاه - کد پیگیری: {authority}",
+                                    description=f"شارژ کیف پول از طریق درگاه - کد پیگیری: {payment_instance.pay_local_id}",
                                     reference=authority
                                 )
                             except ValueError as e:

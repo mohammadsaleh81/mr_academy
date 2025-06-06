@@ -106,11 +106,33 @@ class User(AbstractUser):
             self.wallet_balance = models.F('wallet_balance') + amount
             self.save()
             self.refresh_from_db()
+            
+            # Sync with wallet model if it exists
+            try:
+                if hasattr(self, 'wallet') and self.wallet:
+                    self.wallet.balance = self.wallet_balance
+                    self.wallet.save(update_fields=['balance'])
+            except:
+                pass
+                
         return self.wallet_balance
 
     def deduct_from_wallet(self, amount):
         """Deduct money from user's wallet"""
-        if self.wallet_balance < amount:
+        # Sync wallet balance first if wallet exists
+        try:
+            if hasattr(self, 'wallet') and self.wallet:
+                # Use the actual wallet balance
+                current_balance = int(self.wallet.balance)
+                self.wallet_balance = current_balance
+                self.save(update_fields=['wallet_balance'])
+        except:
+            pass
+        
+        # Ensure wallet_balance is not None
+        current_wallet_balance = self.wallet_balance or 0
+        
+        if current_wallet_balance < amount:
             raise ValueError(_('Insufficient funds in wallet'))
         
         with transaction.atomic():
@@ -118,6 +140,15 @@ class User(AbstractUser):
             self.total_spent = models.F('total_spent') + amount
             self.save()
             self.refresh_from_db()
+            
+            # Sync with wallet model if it exists
+            try:
+                if hasattr(self, 'wallet') and self.wallet:
+                    self.wallet.balance = self.wallet_balance
+                    self.wallet.save(update_fields=['balance'])
+            except:
+                pass
+                
         return self.wallet_balance
 
     def update_last_activity(self, ip_address=None):

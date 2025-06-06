@@ -313,12 +313,25 @@ class CourseEnrollSerializer(serializers.Serializer):
         if discount:
             price = price * (1 - discount.percentage / 100)
         
+        # Convert to integer (remove decimal places for wallet system)
+        price = int(price)
+        
         # For paid courses, check wallet balance
         if price > 0:
-            if user.wallet_balance < price:
+            # Get wallet balance (use wallet.balance if available, fallback to user.wallet_balance)
+            try:
+                wallet_balance = user.wallet.balance
+                # Convert to integer for comparison
+                wallet_balance = int(wallet_balance)
+            except:
+                # Fallback to user.wallet_balance if wallet doesn't exist
+                wallet_balance = user.wallet_balance or 0
+                wallet_balance = int(wallet_balance)
+            
+            if wallet_balance < price:
                 raise serializers.ValidationError(
                     _('موجودی کیف پول شما برای خرید این دوره کافی نیست. '
-                      f'موجودی فعلی: {user.wallet_balance:,.0f} تومان، '
+                      f'موجودی فعلی: {wallet_balance:,.0f} تومان، '
                       f'قیمت دوره: {price:,.0f} تومان')
                 )
         
@@ -336,6 +349,9 @@ class CourseEnrollSerializer(serializers.Serializer):
         price = course.price
         if discount:
             price = price * (1 - discount.percentage / 100)
+        
+        # Convert to integer (remove decimal places for wallet system)
+        price = int(price)
             
         # Process payment if course is not free
         if price > 0:

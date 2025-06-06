@@ -9,7 +9,7 @@ import random
 import string
 
 def generate_random_code(length=36):
-    chars = string.ascii_letters + string.digits
+    chars =  string.digits
     return ''.join(random.choices(chars, k=length))
 
 class Payment(models.Model):
@@ -55,9 +55,9 @@ class Payment(models.Model):
 
     @classmethod
     def add_pay_id(cls):
-        code = generate_random_code()
+        code = generate_random_code(8)
         while cls.objects.filter(pay_local_id=code):
-            code = generate_random_code()
+            code = generate_random_code(8)
         return code
 
 

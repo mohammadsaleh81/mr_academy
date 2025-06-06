@@ -11,6 +11,7 @@ urlpatterns = [
     path('tags/', views.TagListCreateView.as_view(), name='tag-list'),
     path('tags/<slug:slug>/', views.TagDetailView.as_view(), name='tag-detail'),
     path('my-courses/', views.UserCoursesView.as_view(), name='user-courses'),
+    path('wallet-debug/', views.WalletDebugView.as_view(), name='wallet-debug'),
 
     # Course URLs
     path('courses/', views.CourseListCreateView.as_view(), name='course-list'),

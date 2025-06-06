@@ -183,8 +183,12 @@ class CourseEnrollView(APIView):
             course = get_object_or_404(Course, pk=slug, status='published')
         else:
             course = get_object_or_404(Course, slug=slug, status='published')
+        
+        # Add course_id to request data
+        data = request.data.copy()
+        data['course_id'] = course.id
             
-        serializer = CourseEnrollSerializer(data=request.data, context={'request': request})
+        serializer = CourseEnrollSerializer(data=data, context={'request': request})
         if serializer.is_valid():
             enrollment = serializer.save()
             return Response(EnrollmentSerializer(enrollment).data, status=status.HTTP_201_CREATED)
@@ -253,6 +257,28 @@ class UserCoursesView(APIView):
         courses = [enrollment.course for enrollment in enrollments]
         serializer = CourseListSerializer(courses, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class WalletDebugView(APIView):
+    """Debug endpoint to check wallet balances"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        data = {
+            'user_wallet_balance': user.wallet_balance,
+            'wallet_balance': getattr(user.wallet, 'balance', None) if hasattr(user, 'wallet') else None,
+            'wallet_exists': hasattr(user, 'wallet') and user.wallet is not None,
+        }
+        
+        # Try to sync balances
+        try:
+            if hasattr(user, 'wallet') and user.wallet:
+                data['wallet_balance_int'] = int(user.wallet.balance)
+                data['user_wallet_balance_int'] = int(user.wallet_balance or 0)
+        except Exception as e:
+            data['error'] = str(e)
+            
+        return Response(data)
 
 # New APIs for Learn Page
 class LessonDetailView(APIView):
