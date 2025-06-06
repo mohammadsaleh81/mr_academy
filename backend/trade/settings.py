@@ -68,9 +68,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
- #   'corsheaders.middleware.CorsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
-    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -246,56 +244,15 @@ SPECTACULAR_SETTINGS = {
 
 from unfold_tools.main import UNFOLD
 
-# # CORS Settings
+# CORS Settings - Frontend URLs
 CORS_ALLOWED_ORIGINS = [
-    "http://91.99.49.130:3000",
-    "https://academy.gport.sbs",
-    'http://localhost:8080'
-
-]
-
-CORS_ALLOW_CREDENTIALS = True
-
-# CORS_ALLOW_METHODS = [
-#     'DELETE',
-#     'GET',
-#     'OPTIONS',
-#     'PATCH',
-#     'POST',
-#     'PUT',
-# ]
-
-# CORS_ALLOW_HEADERS = [
-#     'accept',
-#     'accept-encoding',
-#     'authorization',
-#     'content-type',
-#     'dnt',
-#     'origin',
-#     'user-agent',
-#     'x-csrftoken',
-#     'x-requested-with',
-#     'X-CSRFToken',
-# ]
-
-CSRF_TRUSTED_ORIGINS = [
-    'https://academy.gport.sbs',
-    'http://91.99.49.130:3000',
-    'http://91.99.49.130:3000',
-    'http://localhost:8080',
-    "https://academy.gport.sbs"
-
-]
-
-# w36asdmxr5alzk8
-
-
-# # CORS Settings
-CORS_ALLOWED_ORIGINS = [
-    "http://91.99.49.130:3000",
-    "http://91.99.49.130:8081",  # Vite current port
+    # Frontend URLs
+    "http://91.99.49.130:8081",
+    "http://91.99.49.130:8080", 
     "http://localhost:8081",
     "http://127.0.0.1:8081",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
     "https://academy.gport.sbs",
 ]
 
@@ -322,11 +279,32 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
+# CSRF Trusted Origins - Frontend and Backend URLs
 CSRF_TRUSTED_ORIGINS = [
-    'http://91.99.49.130:3000',
+    # Frontend URLs
+    'http://91.99.49.130:8081',
     'http://91.99.49.130:8080',
     'http://localhost:8081',
     'http://127.0.0.1:8081',
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+    'https://academy.gport.sbs',
+    # Backend URLs
+    'https://api.gport.sbs',
+    'http://91.99.49.130:8000',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# Additional CORS settings for Mixed Content support
+CORS_ALLOW_ALL_ORIGINS = False  # Keep secure
+CORS_ALLOWED_ORIGIN_REGEXES = []
+
+# Security settings for Mixed Content issues
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+CORS_EXPOSE_HEADERS = [
+    'Content-Range',
+    'X-Total-Count',
 ]
 
 
