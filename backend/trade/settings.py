@@ -246,21 +246,23 @@ from unfold_tools.main import UNFOLD
 
 # CORS Settings - Frontend URLs
 CORS_ALLOWED_ORIGINS = [
-    # Frontend URLs
+    "https://academy.gport.sbs",
     "http://91.99.49.130:8081",
     "http://91.99.49.130:8080", 
     "http://localhost:8081",
     "http://127.0.0.1:8081",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
-    "https://academy.gport.sbs",
 ]
 
+# Override CORS to prevent duplicate headers
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',
+    'HEAD',
     'OPTIONS',
     'PATCH',
     'POST',
@@ -279,32 +281,26 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# CSRF Trusted Origins - Frontend and Backend URLs
+# Additional CORS settings
+CORS_PREFLIGHT_MAX_AGE = 86400
+CORS_EXPOSE_HEADERS = [
+    'Content-Range',
+    'X-Total-Count',
+]
+
+# CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [
-    # Frontend URLs
+    'https://academy.gport.sbs',
+    'https://api.gport.sbs',
     'http://91.99.49.130:8081',
     'http://91.99.49.130:8080',
+    'http://91.99.49.130:8000',
     'http://localhost:8081',
     'http://127.0.0.1:8081',
     'http://localhost:8080',
     'http://127.0.0.1:8080',
-    'https://academy.gport.sbs',
-    # Backend URLs
-    'https://api.gport.sbs',
-    'http://91.99.49.130:8000',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
-]
-
-# Additional CORS settings for Mixed Content support
-CORS_ALLOW_ALL_ORIGINS = False  # Keep secure
-CORS_ALLOWED_ORIGIN_REGEXES = []
-
-# Security settings for Mixed Content issues
-SECURE_CROSS_ORIGIN_OPENER_POLICY = None
-CORS_EXPOSE_HEADERS = [
-    'Content-Range',
-    'X-Total-Count',
 ]
 
 
@@ -317,5 +313,21 @@ ZP_API_VERIFY = "https://sandbox.zarinpal.com/pg/v4/payment/verify.json"
 ZP_API_STARTPAY = "https://sandbox.zarinpal.com/pg/StartPay/"
 
 SMS_KEY = "OWYxMTZkZDUtOTY5Ni00NWZiLTllNGYtMjJjYzZlYTQ0ODk2NTczNDU5MDUwZWU1YjkyYjRkY2QyM2VhNTUwZWU4ZjI"
+
+
+# CALLBACK_URL = 'https://academy.gport.sbs/payment-verify'
 CALLBACK_URL = 'http://91.99.49.130:8081/payment-verify'
+
+# Cache Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,  # 5 minutes default timeout
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    }
+}
+
 

@@ -19,14 +19,21 @@ urlpatterns = [
     # Video URLs
     path('videos/', views.VideoListView.as_view(), name='video-list'),
     path('videos/<int:pk>/', views.VideoDetailView.as_view(), name='video-detail'),
+    path('videos/<int:pk>/comments/', views.VideoCommentView.as_view(), name='video-comments'),
 
     # Podcast URLs
     path('podcasts/', views.PodcastListView.as_view(), name='podcast-list'),
     path('podcasts/<int:pk>/', views.PodcastDetailView.as_view(), name='podcast-detail'),
+    path('podcasts/<int:pk>/comments/', views.PodcastCommentView.as_view(), name='podcast-comments'),
 
-    # Comment URLs
+    # Comment URLs (for articles)
     path('comments/', views.CommentListCreateView.as_view(), name='comment-list'),
     path('comments/<int:pk>/', views.CommentDetailView.as_view(), name='comment-detail'),
+
+    # Media Comment URLs (for all media types)
+    path('media-comments/', views.MediaCommentView.as_view(), name='media-comments'),
+    path('media-comments/list/', views.MediaCommentListCreateView.as_view(), name='media-comment-list'),
+    path('media-comments/<int:pk>/', views.MediaCommentDetailView.as_view(), name='media-comment-detail'),
 
     # Like URLs
     path('likes/', views.ArticleLikeListCreateView.as_view(), name='like-list'),

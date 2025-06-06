@@ -48,14 +48,11 @@ class ArticleSerializer(serializers.ModelSerializer):
         return obj.author.first_name + ' ' + obj.author.last_name
 
     def get_published(self, obj):
-        return obj.published_at.strftime('%Y-%m-%d')
+        return obj.published_at.strftime('%Y-%m-%d') if obj.published_at else None
 
 
     def get_thumbnail(self, obj):
         return 'https://api.gport.sbs' + obj.thumbnail.url if obj.thumbnail else ''
-
-
-
 
     def create(self, validated_data):
         tags_data = validated_data.pop('tags', [])
@@ -161,7 +158,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def get_replies(self, obj):
         if obj.replies.exists():
-            return CommentSerializer(obj.replies.all(), many=True).data
+            return CommentSerializer(obj.replies.all(), many=True, context=self.context).data
         return []
 
     def validate_parent(self, value):
@@ -174,16 +171,26 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class MediaCommentSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
-    content_type = serializers.PrimaryKeyRelatedField(queryset=ContentType.objects.all())
-    object_id = serializers.IntegerField()
-
+    replies = serializers.SerializerMethodField()
+    content_object_name = serializers.SerializerMethodField()
+    
     class Meta:
         model = MediaComment
         fields = [
-            'id', 'content_type', 'object_id', 'author', 'parent',
-            'content', 'created_at', 'updated_at', 'is_approved'
+            'id', 'content_type', 'object_id', 'content_object_name', 'author', 'parent',
+            'content', 'created_at', 'updated_at', 'is_approved', 'replies'
         ]
-        read_only_fields = ['created_at', 'updated_at', 'is_approved']
+        read_only_fields = ['created_at', 'updated_at', 'is_approved', 'replies', 'content_object_name']
+
+    def get_replies(self, obj):
+        if obj.replies.exists():
+            return MediaCommentSerializer(obj.replies.all(), many=True, context=self.context).data
+        return []
+    
+    def get_content_object_name(self, obj):
+        if obj.content_object:
+            return str(obj.content_object)
+        return None
 
     def validate(self, data):
         try:
@@ -193,6 +200,46 @@ class MediaCommentSerializer(serializers.ModelSerializer):
         except (ContentType.DoesNotExist, AttributeError):
             raise serializers.ValidationError("Invalid content type or object ID")
         return data
+
+    def validate_parent(self, value):
+        if value:
+            if value.parent:
+                raise serializers.ValidationError("نظر نمی‌تواند بیش از یک سطح پاسخ داشته باشد.")
+            # بررسی اینکه parent comment مربوط به همان محتوا باشد
+            if (value.content_type_id != self.initial_data.get('content_type') or
+                value.object_id != self.initial_data.get('object_id')):
+                raise serializers.ValidationError("پاسخ باید به نظری از همان محتوا باشد.")
+        return value
+
+# سریالایزر ساده برای ایجاد کامنت رسانه که نیاز به کمتر اطلاعات دارد
+class MediaCommentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MediaComment
+        fields = ['content_type', 'object_id', 'parent', 'content']
+    
+    def validate(self, data):
+        try:
+            content_type = data['content_type']
+            object_id = data['object_id']
+            content_object = content_type.get_object_for_this_type(id=object_id)
+            
+            # بررسی اینکه محتوا منتشر شده باشد
+            if hasattr(content_object, 'status') and content_object.status != 'published':
+                raise serializers.ValidationError("نمی‌توان برای محتوای منتشر نشده کامنت گذاشت.")
+                
+        except (ContentType.DoesNotExist, AttributeError):
+            raise serializers.ValidationError("نوع محتوا یا شناسه محتوا نامعتبر است.")
+        return data
+
+    def validate_parent(self, value):
+        if value:
+            if value.parent:
+                raise serializers.ValidationError("نظر نمی‌تواند بیش از یک سطح پاسخ داشته باشد.")
+            # بررسی اینکه parent comment مربوط به همان محتوا باشد
+            if (value.content_type_id != self.initial_data.get('content_type') or
+                value.object_id != self.initial_data.get('object_id')):
+                raise serializers.ValidationError("پاسخ باید به نظری از همان محتوا باشد.")
+        return value
 
 class ArticleLikeSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)

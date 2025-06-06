@@ -30,7 +30,7 @@ def send_payment_request(amount, description, mobile=None, email=None):
 
 
 
-def send_verify(amount, authority):
+def send_verify(authority, amount):
     url = settings.ZP_API_VERIFY
     headers = {
         'Content-Type': 'application/json',
