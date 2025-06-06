@@ -10,6 +10,7 @@ from payment.gateway.zarinpal import send_payment_request, send_verify
 from payment.models import Payment
 from django.conf import settings
 from datetime import datetime
+from django.db import transaction
 
 # Create your views here.
 
@@ -136,6 +137,15 @@ class WalletPaymentVerifyView(APIView):
             if payment_instance.extra.get('purpose') != 'wallet_deposit':
                 return Response({'error': 'Invalid payment purpose'}, status=status.HTTP_400_BAD_REQUEST)
             
+            # Check if payment is already processed
+            if payment_instance.status == 'successful':
+                return Response({
+                    'success': True,
+                    'message': 'این پرداخت قبلاً پردازش شده است',
+                    'amount': payment_instance.amount,
+                    'new_balance': request.user.wallet.balance
+                })
+            
             if pay_status == 'OK':
                 # Verify payment with gateway
                 try:
@@ -146,59 +156,106 @@ class WalletPaymentVerifyView(APIView):
                     
                     # Check if verification was successful
                     if verify_result.get("data") and verify_result["data"].get("code") == 100:
-                        # Payment verified successfully, deposit to wallet
-                        wallet = request.user.wallet
-                        wallet.deposit(
-                            amount=payment_instance.amount,
-                            description=f"شارژ کیف پول از طریق درگاه - کد پیگیری: {authority}",
-                            reference=authority
-                        )
-                        
-                        # Update payment record with verification details
-                        payment_instance.status = 'successful'
-                        payment_instance.done_at = datetime.now()
-                        
-                        # Store additional payment details
-                        verify_data = verify_result.get("data", {})
-                        payment_instance.card_hash = verify_data.get('card_hash', '')
-                        payment_instance.card_pan = verify_data.get('card_pan', '')
-                        payment_instance.ref_id = verify_data.get('ref_id', '')
-                        payment_instance.fee_type = verify_data.get('fee_type', '')
-                        payment_instance.shaparak_fee = verify_data.get('shaparak_fee', '')
-                        
-                        # Update extra field with verification data
-                        extra = payment_instance.extra or {}
-                        extra.update({'verify': verify_result})
-                        payment_instance.extra = extra
-                        
-                        payment_instance.save()
-                        
-                        return Response({
-                            'success': True,
-                            'message': 'کیف پول با موفقیت شارژ شد',
-                            'amount': payment_instance.amount,
-                            'new_balance': wallet.balance,
-                            'ref_id': verify_data.get('ref_id', '')
-                        })
+                        # Use database transaction to prevent duplicate processing
+                        with transaction.atomic():
+                            # Double check payment status within transaction
+                            payment_instance.refresh_from_db()
+                            if payment_instance.status == 'successful':
+                                return Response({
+                                    'success': True,
+                                    'message': 'این پرداخت قبلاً پردازش شده است',
+                                    'amount': payment_instance.amount,
+                                    'new_balance': request.user.wallet.balance
+                                })
+                            
+                            # Payment verified successfully, deposit to wallet
+                            wallet = request.user.wallet
+                            try:
+                                wallet.deposit(
+                                    amount=payment_instance.amount,
+                                    description=f"شارژ کیف پول از طریق درگاه - کد پیگیری: {authority}",
+                                    reference=authority
+                                )
+                            except ValueError as e:
+                                if "already exists" in str(e):
+                                    # Transaction already processed
+                                    return Response({
+                                        'success': True,
+                                        'message': 'این پرداخت قبلاً پردازش شده است',
+                                        'amount': payment_instance.amount,
+                                        'new_balance': wallet.balance
+                                    })
+                                else:
+                                    raise e
+                            
+                            # Update payment record with verification details
+                            payment_instance.status = 'successful'
+                            payment_instance.done_at = datetime.now()
+                            
+                            # Store additional payment details
+                            verify_data = verify_result.get("data", {})
+                            payment_instance.card_hash = verify_data.get('card_hash', '')
+                            payment_instance.card_pan = verify_data.get('card_pan', '')
+                            payment_instance.ref_id = verify_data.get('ref_id', '')
+                            payment_instance.fee_type = verify_data.get('fee_type', '')
+                            payment_instance.shaparak_fee = verify_data.get('shaparak_fee', '')
+                            
+                            # Update extra field with verification data
+                            extra = payment_instance.extra or {}
+                            extra.update({'verify': verify_result})
+                            payment_instance.extra = extra
+                            
+                            payment_instance.save()
+                            
+                            return Response({
+                                'success': True,
+                                'message': 'کیف پول با موفقیت شارژ شد',
+                                'amount': payment_instance.amount,
+                                'new_balance': wallet.balance,
+                                'ref_id': verify_data.get('ref_id', '')
+                            })
                     elif verify_result.get("data") and verify_result["data"].get("code") == 101:
                         # Payment was already verified
-                        wallet = request.user.wallet
-                        wallet.deposit(
-                            amount=payment_instance.amount,
-                            description=f"شارژ کیف پول از طریق درگاه - کد پیگیری: {authority}",
-                            reference=authority
-                        )
-                        
-                        payment_instance.status = 'successful'
-                        payment_instance.done_at = datetime.now()
-                        payment_instance.save()
-                        
-                        return Response({
-                            'success': True,
-                            'message': 'کیف پول با موفقیت شارژ شد (تراکنش قبلاً تایید شده)',
-                            'amount': payment_instance.amount,
-                            'new_balance': wallet.balance
-                        })
+                        with transaction.atomic():
+                            # Double check payment status within transaction
+                            payment_instance.refresh_from_db()
+                            if payment_instance.status == 'successful':
+                                return Response({
+                                    'success': True,
+                                    'message': 'این پرداخت قبلاً پردازش شده است',
+                                    'amount': payment_instance.amount,
+                                    'new_balance': request.user.wallet.balance
+                                })
+                            
+                            wallet = request.user.wallet
+                            try:
+                                wallet.deposit(
+                                    amount=payment_instance.amount,
+                                    description=f"شارژ کیف پول از طریق درگاه - کد پیگیری: {authority}",
+                                    reference=authority
+                                )
+                            except ValueError as e:
+                                if "already exists" in str(e):
+                                    # Transaction already processed
+                                    return Response({
+                                        'success': True,
+                                        'message': 'این پرداخت قبلاً پردازش شده است',
+                                        'amount': payment_instance.amount,
+                                        'new_balance': wallet.balance
+                                    })
+                                else:
+                                    raise e
+                            
+                            payment_instance.status = 'successful'
+                            payment_instance.done_at = datetime.now()
+                            payment_instance.save()
+                            
+                            return Response({
+                                'success': True,
+                                'message': 'کیف پول با موفقیت شارژ شد (تراکنش قبلاً تایید شده)',
+                                'amount': payment_instance.amount,
+                                'new_balance': wallet.balance
+                            })
                     else:
                         # Payment verification failed
                         payment_instance.status = 'failed'

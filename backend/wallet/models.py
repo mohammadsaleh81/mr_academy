@@ -30,6 +30,14 @@ class Wallet(models.Model):
         if amount <= 0:
             raise ValueError(_("Amount must be positive"))
 
+        # Check for duplicate transaction by reference
+        if reference and Transaction.objects.filter(
+            wallet=self,
+            reference=reference,
+            transaction_type='deposit'
+        ).exists():
+            raise ValueError(_("Transaction with this reference already exists"))
+
         self.balance += amount
         self.save(update_fields=['balance', 'updated_at'])
         
