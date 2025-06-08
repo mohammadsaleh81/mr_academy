@@ -77,6 +77,7 @@ class VideoSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True)
     category = MediaCategorySerializer()
+    created_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Video
@@ -88,6 +89,10 @@ class VideoSerializer(serializers.ModelSerializer):
             'view_count'
         ]
         read_only_fields = ['created_at', 'updated_at', 'view_count']
+
+    def get_created_at(self, obj):
+        return obj.created_at.strftime('%Y-%m-%d') if obj.created_at else None
+
 
     def create(self, validated_data):
         tags_data = validated_data.pop('tags', [])
@@ -112,7 +117,7 @@ class PodcastSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True)
     category = MediaCategorySerializer()
-
+    created_at = serializers.SerializerMethodField()
     class Meta:
         model = Podcast
         fields = [
@@ -123,6 +128,10 @@ class PodcastSerializer(serializers.ModelSerializer):
             'view_count'
         ]
         read_only_fields = ['created_at', 'updated_at', 'view_count']
+
+        
+    def get_created_at(self, obj):
+        return obj.created_at.strftime('%Y-%m-%d') if obj.created_at else None
 
     def create(self, validated_data):
         tags_data = validated_data.pop('tags', [])
@@ -147,6 +156,8 @@ class CommentSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     replies = serializers.SerializerMethodField()
     article = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all())
+    created_at = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Comment
@@ -155,6 +166,9 @@ class CommentSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at', 'is_approved', 'replies'
         ]
         read_only_fields = ['created_at', 'updated_at', 'is_approved', 'replies']
+
+    def get_created_at(self, obj):
+        return obj.created_at.strftime('%Y-%m-%d') if obj.created_at else None
 
     def get_replies(self, obj):
         if obj.replies.exists():
@@ -173,6 +187,7 @@ class MediaCommentSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     replies = serializers.SerializerMethodField()
     content_object_name = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
     
     class Meta:
         model = MediaComment
@@ -181,6 +196,9 @@ class MediaCommentSerializer(serializers.ModelSerializer):
             'content', 'created_at', 'updated_at', 'is_approved', 'replies'
         ]
         read_only_fields = ['created_at', 'updated_at', 'is_approved', 'replies', 'content_object_name']
+
+    def get_created_at(self, obj):
+        return obj.created_at.strftime('%Y-%m-%d') if obj.created_at else None
 
     def get_replies(self, obj):
         if obj.replies.exists():

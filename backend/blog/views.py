@@ -7,6 +7,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from rest_framework.pagination import PageNumberPagination
 from .models import Article, Video, Podcast, Comment, ArticleLike, ArticleBookmark, Category, MediaComment, File, LiveStream
 from .serializers import (
     ArticleSerializer, VideoSerializer, PodcastSerializer,
@@ -15,19 +16,43 @@ from .serializers import (
 )
 from rest_framework.decorators import action
 
+class ContentPagination(PageNumberPagination):
+    page_size = 2
+    page_size_query_param = 'page_size'
+    max_page_size = 2
+    
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'total_pages': self.page.paginator.num_pages,
+            'current_page': self.page.number,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data
+        })
+
 # Create your views here.
 
 @extend_schema_view(
     get=extend_schema(
         summary="List all articles",
-        description="Returns a list of all published articles.",
+        description="Returns a paginated list of all published articles.",
     ),
 )
 class ArticleListView(APIView):
     permission_classes = [permissions.AllowAny]
+    pagination_class = ContentPagination
 
     def get(self, request):
-        articles = Article.objects.filter(status='published')
+        articles = Article.objects.filter(status='published').order_by('-created_at')
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(articles, request)
+        if page is not None:
+            serializer = ArticleSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
         serializer = ArticleSerializer(articles, many=True)
         return Response(serializer.data)
 
@@ -108,14 +133,23 @@ class CategoryDetailView(APIView):
 @extend_schema_view(
     get=extend_schema(
         summary="List all videos",
-        description="Returns a list of all published videos.",
+        description="Returns a paginated list of all published videos.",
     ),
 )
 class VideoListView(APIView):
     permission_classes = [permissions.AllowAny]
+    pagination_class = ContentPagination
 
     def get(self, request):
-        videos = Video.objects.filter(status='published')
+        videos = Video.objects.filter(status='published').order_by('-created_at')
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(videos, request)
+        if page is not None:
+            serializer = VideoSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
         serializer = VideoSerializer(videos, many=True)
         return Response(serializer.data)
 
@@ -138,14 +172,23 @@ class VideoDetailView(APIView):
 @extend_schema_view(
     get=extend_schema(
         summary="List all podcasts",
-        description="Returns a list of all published podcasts.",
+        description="Returns a paginated list of all published podcasts.",
     ),
 )
 class PodcastListView(APIView):
     permission_classes = [permissions.AllowAny]
+    pagination_class = ContentPagination
 
     def get(self, request):
-        podcasts = Podcast.objects.filter(status='published')
+        podcasts = Podcast.objects.filter(status='published').order_by('-created_at')
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(podcasts, request)
+        if page is not None:
+            serializer = PodcastSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
         serializer = PodcastSerializer(podcasts, many=True)
         return Response(serializer.data)
 
@@ -168,7 +211,7 @@ class PodcastDetailView(APIView):
 @extend_schema_view(
     get=extend_schema(
         summary="List article comments",
-        description="Returns a list of comments for a specific article.",
+        description="Returns a paginated list of comments for a specific article.",
     ),
     post=extend_schema(
         summary="Create a comment",
@@ -177,12 +220,21 @@ class PodcastDetailView(APIView):
 )
 class CommentListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = ContentPagination
 
     def get(self, request):
         article_id = request.query_params.get('article')
-        comments = Comment.objects.filter(parent=None)
+        comments = Comment.objects.filter(parent=None).order_by('-created_at')
         if article_id:
             comments = comments.filter(article_id=article_id)
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(comments, request)
+        if page is not None:
+            serializer = CommentSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
 
@@ -354,7 +406,7 @@ class MediaCommentView(APIView):
 @extend_schema_view(
     get=extend_schema(
         summary="List media comments",
-        description="Returns a list of all media comments with filtering options.",
+        description="Returns a paginated list of all media comments with filtering options.",
         parameters=[
             {
                 'name': 'content_type',
@@ -379,6 +431,7 @@ class MediaCommentView(APIView):
 )
 class MediaCommentListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = ContentPagination
 
     def get(self, request):
         comments = MediaComment.objects.filter(parent=None, is_approved=True).order_by('-created_at')
@@ -399,6 +452,13 @@ class MediaCommentListCreateView(APIView):
             if model_class:
                 content_type = ContentType.objects.get_for_model(model_class)
                 comments = comments.filter(content_type=content_type, object_id=object_id)
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(comments, request)
+        if page is not None:
+            serializer = MediaCommentSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
         
         serializer = MediaCommentSerializer(comments, many=True)
         return Response(serializer.data)

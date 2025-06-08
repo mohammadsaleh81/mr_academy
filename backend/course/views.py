@@ -31,6 +31,23 @@ from course.permissions import (
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
+
+class StandardPagination(PageNumberPagination):
+    page_size = 2
+    page_size_query_param = 'page_ssize'
+    max_page_size = 2
+    
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'total_pages': self.page.paginator.num_pages,
+            'current_page': self.page.number,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data
+        })
+
 # Create your views here.
 
 class TagListCreateView(APIView):
@@ -78,12 +95,20 @@ class CourseListCreateView(APIView):
     filterset_class = CourseFilter
     search_fields = ['title', 'description', 'instructor__first_name', 'instructor__last_name', 'tags__name']
     ordering_fields = ['created_at', 'price', 'rating_avg', 'student_count']
+    pagination_class = StandardPagination
 
     def get(self, request):
         courses = Course.objects.filter(status='published')
-        # Apply filters, search, and ordering
         for backend in self.filter_backends:
             courses = backend().filter_queryset(request, courses, self)
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(courses, request)
+        if page is not None:
+            serializer = CourseListSerializer(page, many=True, context={'request': request})
+            return paginator.get_paginated_response(serializer.data)
+        
         serializer = CourseListSerializer(courses, many=True, context={'request': request})
         return Response(serializer.data)
 
@@ -250,11 +275,20 @@ class EnrollmentProgressView(generics.RetrieveAPIView):
 
 class UserCoursesView(APIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
 
     def get(self, request):
         print("*****************")
-        enrollments = Enrollment.objects.filter(user=request.user).select_related('course')
+        enrollments = Enrollment.objects.filter(user=request.user).select_related('course').order_by('-created_at')
         courses = [enrollment.course for enrollment in enrollments]
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(courses, request)
+        if page is not None:
+            serializer = CourseListSerializer(page, many=True, context={'request': request})
+            return paginator.get_paginated_response(serializer.data)
+        
         serializer = CourseListSerializer(courses, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
