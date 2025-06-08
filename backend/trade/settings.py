@@ -253,10 +253,12 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8081",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
+    "https://preview--trader-pro-academy.lovable.app",
+    "https://3346b481-94af-4675-8929-fb50872f5a3c.lovableproject.com"
 ]
 
 # Override CORS to prevent duplicate headers
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS =  True
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_METHODS = [
@@ -301,6 +303,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8080',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    "https://preview--trader-pro-academy.lovable.app",
+    "https://3346b481-94af-4675-8929-fb50872f5a3c.lovableproject.com"
 ]
 
 

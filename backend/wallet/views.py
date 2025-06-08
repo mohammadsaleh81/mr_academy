@@ -47,7 +47,7 @@ class DepositThroughGatewayView(APIView):
         amount = request.data.get('amount')
         
         if not amount:
-            return Response({'error': 'Amount is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'مبلغ الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
             
         try:
             amount = int(amount)
@@ -56,7 +56,7 @@ class DepositThroughGatewayView(APIView):
             if amount > 100000000:
                 return Response({'error': 'حداکثر مبلغ شارژ ۱۰۰ میلیون تومان است'}, status=status.HTTP_400_BAD_REQUEST)
         except (ValueError, TypeError):
-            return Response({'error': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'مبلغ نامعتبر است'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Get user details for payment gateway
         user = request.user
@@ -123,14 +123,14 @@ class WalletPaymentVerifyView(APIView):
         print(f"DEBUG: Payment verification started - Authority: {authority}, Status: {pay_status}")
         
         if not authority:
-            return Response({'error': 'Authority parameter missing'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'پارامتر Authority یافت نشد'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Find payment record
         payment_instance = Payment.objects.filter(authority=authority, user=request.user).first()
         
         if not payment_instance:
             print(f"DEBUG: Payment record not found for authority: {authority}")
-            return Response({'error': 'Payment record not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'رکورد پرداخت یافت نشد'}, status=status.HTTP_404_NOT_FOUND)
         
         print(f"DEBUG: Payment found - Amount: {payment_instance.amount}, Status: {payment_instance.status}")
         

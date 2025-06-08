@@ -48,7 +48,7 @@ class RequestOTPView(APIView):
                     user_agent=request.META.get('HTTP_USER_AGENT', '')
                 )
                 return Response({
-                    'error': _('Failed to generate OTP. Please try again.')
+                    'error': _('ارسال کد با مشکل مواجه شد لطفا دوباره تلاش کنید')
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -102,7 +102,7 @@ class VerifyOTPView(APIView):
                 }, status=status.HTTP_200_OK)
 
             return Response({
-                'error': _('Invalid or expired OTP')
+                'error': _('کد وارد شده معتبر نیست یا منقضی شده است')
             }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -141,19 +141,19 @@ class UserAvatarView(APIView):
 
     def post(self, request):
         if 'avatar' not in request.FILES:
-            return Response({'error': _('No file was submitted.')}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': _('تصویری انتخاب نشده است')}, status=status.HTTP_400_BAD_REQUEST)
 
         file = request.FILES['avatar']
 
         # Check file type
         allowed_types = ['image/jpeg', 'image/png', 'image/gif']
         if file.content_type not in allowed_types:
-            return Response({'error': _('Invalid file type. Only JPEG, PNG, and GIF are allowed.')},
+            return Response({'error': _('فرمت فایل مجاز نیست')},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # Check file size (limit to 5MB)
         if file.size > 5 * 1024 * 1024:
-            return Response({'error': _('File size too large. Please keep files under 5MB.')},
+            return Response({'error': _('حجم فایل بیشتر از 5 مگابایت است')},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # Delete old avatar if exists

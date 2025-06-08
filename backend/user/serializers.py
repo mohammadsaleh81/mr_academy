@@ -36,9 +36,9 @@ class OTPVerificationSerializer(serializers.Serializer):
         # Remove any whitespace
         value = value.strip()
         
-        # Check if it's exactly 4 digits
+        # Check if it's exactly 5 digits
         if not re.match(r'^\d{5}$', value):
-            raise serializers.ValidationError("کد تایید باید دقیقا 4 رقم باشد")
+            raise serializers.ValidationError("کد تایید باید دقیقا 5 رقم باشد")
         
         return value
 

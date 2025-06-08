@@ -296,7 +296,7 @@ class MediaCommentView(APIView):
         
         if not content_type_name or not object_id:
             return Response(
-                {'error': 'content_type و object_id الزامی هستند.'}, 
+                {'error': 'نوع محتوا و شناسه محتوا الزامی هستند.'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -323,7 +323,7 @@ class MediaCommentView(APIView):
         
         if not content_type_name or not object_id:
             return Response(
-                {'error': 'content_type و object_id الزامی هستند.'}, 
+                {'error': 'نوع محتوا و شناسه محتوا الزامی هستند.'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         

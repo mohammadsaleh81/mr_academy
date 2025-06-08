@@ -301,7 +301,7 @@ class LessonDetailView(APIView):
         # Check if lesson is accessible (enrolled or free preview)
         if not lesson.is_free_preview and not enrollment:
             return Response(
-                {"detail": "برای دسترسی به این درس باید در دوره ثبت‌نام کنید"}, 
+                {"error": "برای دسترسی به این درس باید در دوره ثبت‌نام کنید"}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         

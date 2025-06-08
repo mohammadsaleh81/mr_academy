@@ -82,7 +82,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = self.get_object()
         if order.status != 'pending':
             return Response(
-                {"detail": "Can only add items to pending orders"},
+                {"error": "فقط می‌توان آیتم به سفارشات در انتظار اضافه کرد"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -100,7 +100,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = self.get_object()
         if order.status != 'pending':
             return Response(
-                {"detail": "Order is not in pending status"},
+                {"error": "سفارش در وضعیت در انتظار نیست"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -126,7 +126,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             order.save()
             
             return Response({
-                'detail': 'Payment processed successfully',
+                'message': 'پرداخت با موفقیت انجام شد',
                 'payment': PaymentSerializer(payment).data
             })
 
@@ -166,13 +166,13 @@ class PaymentViewSet(viewsets.ModelViewSet):
         
         if payment.payment_method != 'wallet':
             return Response(
-                {'error': _('This payment is not a wallet payment')},
+                {'error': _('این پرداخت از نوع کیف پول نیست')},
                 status=status.HTTP_400_BAD_REQUEST
             )
             
         if payment.status != 'pending':
             return Response(
-                {'error': _('This payment cannot be processed')},
+                {'error': _('این پرداخت قابل پردازش نیست')},
                 status=status.HTTP_400_BAD_REQUEST
             )
             
@@ -180,12 +180,12 @@ class PaymentViewSet(viewsets.ModelViewSet):
         
         if success:
             return Response(
-                {'message': _('Payment processed successfully')},
+                {'message': _('پرداخت با موفقیت انجام شد')},
                 status=status.HTTP_200_OK
             )
         else:
             return Response(
-                {'error': _('Payment processing failed')},
+                {'error': _('پردازش پرداخت ناموفق بود')},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -243,7 +243,7 @@ class OrderCancelView(APIView):
         order = get_object_or_404(Order, pk=pk, user=request.user)
         try:
             order.cancel()
-            return Response({'message': _('Order cancelled successfully')}, status=status.HTTP_200_OK)
+            return Response({'message': _('سفارش با موفقیت لغو شد')}, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -254,7 +254,7 @@ class OrderRefundView(APIView):
         order = get_object_or_404(Order, pk=pk, user=request.user)
         try:
             order.refund()
-            return Response({'message': _('Refund processed successfully')}, status=status.HTTP_200_OK)
+            return Response({'message': _('بازپرداخت با موفقیت انجام شد')}, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -264,7 +264,7 @@ class OrderAddItemView(APIView):
     def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk, user=request.user)
         if order.status != 'pending':
-            return Response({"detail": "Can only add items to pending orders"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "فقط می‌توان آیتم به سفارشات در انتظار اضافه کرد"}, status=status.HTTP_400_BAD_REQUEST)
         
         serializer = OrderItemSerializer(data=request.data)
         if serializer.is_valid():
