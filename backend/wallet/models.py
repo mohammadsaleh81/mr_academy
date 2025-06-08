@@ -4,6 +4,7 @@ from django.core.validators import MinValueValidator
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import uuid
+import jdatetime
 from user.models import User
 
 # Create your models here.
@@ -16,6 +17,14 @@ class Wallet(models.Model):
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
     is_active = models.BooleanField(_('is active'), default=True)
+
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+    
+    @property
+    def ir_updated_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.updated_at).strftime('%Y/%m/%d')
 
     class Meta:
         verbose_name = _('wallet')
@@ -137,6 +146,10 @@ class Transaction(models.Model):
     reference = models.CharField(_('reference'), max_length=100, blank=True, null=True, db_index=True)
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
 
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = _('transaction')
@@ -191,6 +204,10 @@ class TransactionLog(models.Model):
     ip_address = models.GenericIPAddressField(_('IP address'), blank=True, null=True)
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
 
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = _('transaction log')
@@ -228,6 +245,10 @@ class ActivityLog(models.Model):
     ip_address = models.GenericIPAddressField(_('IP address'), blank=True, null=True)
     user_agent = models.TextField(_('user agent'), blank=True)
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
 
     class Meta:
         ordering = ['-created_at']

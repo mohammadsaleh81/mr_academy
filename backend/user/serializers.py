@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import OTP
+from .models import OTP, WalletTransaction
 import re
 
 User = get_user_model()
@@ -42,12 +42,33 @@ class OTPVerificationSerializer(serializers.Serializer):
         
         return value
 
+class OTPSerializer(serializers.ModelSerializer):
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    expires_at = serializers.CharField(source='ir_expires_at', read_only=True)
+    
+    class Meta:
+        model = OTP
+        fields = ['id', 'phone_number', 'code', 'created_at', 'expires_at']
+        read_only_fields = ['created_at', 'expires_at']
+
+class WalletTransactionSerializer(serializers.ModelSerializer):
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    
+    class Meta:
+        model = WalletTransaction
+        fields = ['id', 'user', 'amount', 'transaction_type', 'description', 'created_at', 'reference_code', 'status']
+        read_only_fields = ['created_at', 'reference_code']
+
 class UserSerializer(serializers.ModelSerializer):
     thumbnail = serializers.SerializerMethodField()
+    otp_created_at = serializers.CharField(source='ir_otp_created_at', read_only=True)
+    birth_date = serializers.CharField(source='ir_birth_date', read_only=True)
+    last_activity = serializers.CharField(source='ir_last_activity', read_only=True)
+    
     class Meta:
         model = User
-        fields = ('id', 'phone_number', 'first_name', 'last_name', 'email','thumbnail', 'is_phone_verified')
-        read_only_fields = ('id', 'phone_number', 'is_phone_verified', 'thumbnail')
+        fields = ('id', 'phone_number', 'first_name', 'last_name', 'email','thumbnail', 'is_phone_verified', 'otp_created_at', 'birth_date', 'last_activity')
+        read_only_fields = ('id', 'phone_number', 'is_phone_verified', 'thumbnail', 'otp_created_at', 'birth_date', 'last_activity')
 
 
     def get_thumbnail(self, obj):

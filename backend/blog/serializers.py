@@ -19,19 +19,26 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug']
 
 class CategorySerializer(serializers.ModelSerializer):
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'description']
+        fields = ['id', 'name', 'slug', 'description', 'created_at']
 
 class MediaCategorySerializer(serializers.ModelSerializer):
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    
     class Meta:
         model = MediaCategory
-        fields = ['id', 'name', 'slug', 'description']
+        fields = ['id', 'name', 'slug', 'description', 'created_at']
 
 class ArticleSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
     published = serializers.SerializerMethodField()
     thumbnail = serializers.SerializerMethodField()
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    updated_at = serializers.CharField(source='ir_updated_at', read_only=True)
+    published_at = serializers.CharField(source='ir_published_at', read_only=True)
 
     tags = TagSerializer(many=True)
     category = CategorySerializer()
@@ -40,7 +47,8 @@ class ArticleSerializer(serializers.ModelSerializer):
         model = Article
         fields = [
             'id', 'title', 'slug', 'content', 'summary', 'thumbnail',
-            'author', 'category', 'tags', 'published', 'view_count'
+            'author', 'category', 'tags', 'published', 'view_count',
+            'created_at', 'updated_at', 'published_at'
         ]
         read_only_fields = ['created_at', 'updated_at', 'view_count']
 
@@ -77,7 +85,9 @@ class VideoSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True)
     category = MediaCategorySerializer()
-    created_at = serializers.SerializerMethodField()
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    updated_at = serializers.CharField(source='ir_updated_at', read_only=True)
+    published_at = serializers.CharField(source='ir_published_at', read_only=True)
 
     class Meta:
         model = Video
@@ -89,10 +99,6 @@ class VideoSerializer(serializers.ModelSerializer):
             'view_count'
         ]
         read_only_fields = ['created_at', 'updated_at', 'view_count']
-
-    def get_created_at(self, obj):
-        return obj.created_at.strftime('%Y-%m-%d') if obj.created_at else None
-
 
     def create(self, validated_data):
         tags_data = validated_data.pop('tags', [])
@@ -117,7 +123,10 @@ class PodcastSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True)
     category = MediaCategorySerializer()
-    created_at = serializers.SerializerMethodField()
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    updated_at = serializers.CharField(source='ir_updated_at', read_only=True)
+    published_at = serializers.CharField(source='ir_published_at', read_only=True)
+    
     class Meta:
         model = Podcast
         fields = [
@@ -128,10 +137,6 @@ class PodcastSerializer(serializers.ModelSerializer):
             'view_count'
         ]
         read_only_fields = ['created_at', 'updated_at', 'view_count']
-
-        
-    def get_created_at(self, obj):
-        return obj.created_at.strftime('%Y-%m-%d') if obj.created_at else None
 
     def create(self, validated_data):
         tags_data = validated_data.pop('tags', [])
@@ -156,7 +161,8 @@ class CommentSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     replies = serializers.SerializerMethodField()
     article = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all())
-    created_at = serializers.SerializerMethodField()
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    updated_at = serializers.CharField(source='ir_updated_at', read_only=True)
 
 
     class Meta:
@@ -166,9 +172,6 @@ class CommentSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at', 'is_approved', 'replies'
         ]
         read_only_fields = ['created_at', 'updated_at', 'is_approved', 'replies']
-
-    def get_created_at(self, obj):
-        return obj.created_at.strftime('%Y-%m-%d') if obj.created_at else None
 
     def get_replies(self, obj):
         if obj.replies.exists():
@@ -187,7 +190,8 @@ class MediaCommentSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     replies = serializers.SerializerMethodField()
     content_object_name = serializers.SerializerMethodField()
-    created_at = serializers.SerializerMethodField()
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    updated_at = serializers.CharField(source='ir_updated_at', read_only=True)
     
     class Meta:
         model = MediaComment
@@ -196,9 +200,6 @@ class MediaCommentSerializer(serializers.ModelSerializer):
             'content', 'created_at', 'updated_at', 'is_approved', 'replies'
         ]
         read_only_fields = ['created_at', 'updated_at', 'is_approved', 'replies', 'content_object_name']
-
-    def get_created_at(self, obj):
-        return obj.created_at.strftime('%Y-%m-%d') if obj.created_at else None
 
     def get_replies(self, obj):
         if obj.replies.exists():
@@ -262,6 +263,7 @@ class MediaCommentCreateSerializer(serializers.ModelSerializer):
 class ArticleLikeSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     article = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all())
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
 
     class Meta:
         model = ArticleLike
@@ -282,7 +284,8 @@ class ArticleLikeSerializer(serializers.ModelSerializer):
 
 class ArticleBookmarkSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    article = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all())
+    article = ArticleSerializer(read_only=True)
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
 
     class Meta:
         model = ArticleBookmark

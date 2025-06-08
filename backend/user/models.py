@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import uuid
+import jdatetime
 
 
 class CustomUserManager(BaseUserManager):
@@ -69,6 +70,24 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
+
+    @property
+    def ir_otp_created_at(self):
+        if self.otp_created_at:
+            return jdatetime.datetime.fromgregorian(datetime=self.otp_created_at).strftime('%Y/%m/%d')
+        return None
+    
+    @property
+    def ir_birth_date(self):
+        if self.birth_date:
+            return jdatetime.date.fromgregorian(date=self.birth_date).strftime('%Y/%m/%d')
+        return None
+    
+    @property
+    def ir_last_activity(self):
+        if self.last_activity:
+            return jdatetime.datetime.fromgregorian(datetime=self.last_activity).strftime('%Y/%m/%d')
+        return None
 
     def __str__(self):
         return f"{self.get_full_name()} ({self.phone_number})" if self.get_full_name() else self.phone_number
@@ -175,6 +194,10 @@ class WalletTransaction(models.Model):
     reference_code = models.UUIDField(_('کد پیگیری'), default=uuid.uuid4, editable=False)
     status = models.CharField(_('وضعیت'), max_length=20, default='completed')
 
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+
     class Meta:
         verbose_name = _('تراکنش کیف پول')
         verbose_name_plural = _('تراکنش‌های کیف پول')
@@ -192,6 +215,14 @@ class OTP(models.Model):
 
     def is_valid(self):
         return self.expires_at > timezone.now()
+
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+    
+    @property
+    def ir_expires_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.expires_at).strftime('%Y/%m/%d')
 
     def __str__(self):
         return f"{self.phone_number} - {self.code}"

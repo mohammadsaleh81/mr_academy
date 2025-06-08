@@ -17,9 +17,9 @@ from .serializers import (
 from rest_framework.decorators import action
 
 class ContentPagination(PageNumberPagination):
-    page_size = 2
+    page_size = 10
     page_size_query_param = 'page_size'
-    max_page_size = 2
+    max_page_size = 50
     
     def get_paginated_response(self, data):
         return Response({
@@ -87,7 +87,7 @@ class ArticleCommentView(APIView):
 
     def get(self, request, pk):
         article = get_object_or_404(Article, pk=pk)
-        comments = Comment.objects.filter(article=article, parent=None)
+        comments = Comment.objects.filter(article=article, parent=None, is_approved=True)
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
 

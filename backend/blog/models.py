@@ -6,6 +6,7 @@ from django.utils.text import slugify
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericRelation
+import jdatetime
 
 
 class Category(models.Model):
@@ -18,6 +19,10 @@ class Category(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+    
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
     
     def __str__(self):
         return self.name
@@ -104,6 +109,20 @@ class Article(models.Model):
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
     
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+    
+    @property
+    def ir_updated_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.updated_at).strftime('%Y/%m/%d')
+    
+    @property
+    def ir_published_at(self):
+        if self.published_at:
+            return jdatetime.datetime.fromgregorian(datetime=self.published_at).strftime('%Y/%m/%d')
+        return None
+    
     def __str__(self):
         return self.title
     
@@ -118,6 +137,10 @@ class ArticleLike(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, verbose_name=_('مقاله'))
     created_at = models.DateTimeField(_('تاریخ ایجاد'), auto_now_add=True)
 
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+
     class Meta:
         unique_together = ('user', 'article')
         verbose_name = _('پسند مقاله')
@@ -131,6 +154,10 @@ class ArticleBookmark(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('کاربر'))
     article = models.ForeignKey(Article, on_delete=models.CASCADE, verbose_name=_('مقاله'))
     created_at = models.DateTimeField(_('تاریخ ایجاد'), auto_now_add=True)
+
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
 
     class Meta:
         unique_together = ('user', 'article')
@@ -167,6 +194,14 @@ class Comment(models.Model):
     updated_at = models.DateTimeField(_('تاریخ به‌روزرسانی'), auto_now=True)
     is_approved = models.BooleanField(_('تایید شده'), default=False)
     
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+    
+    @property
+    def ir_updated_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.updated_at).strftime('%Y/%m/%d')
+    
     def __str__(self):
         return f'نظر {self.author} در {self.article}'
     
@@ -197,6 +232,14 @@ class Rating(models.Model):
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
     
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+    
+    @property
+    def ir_updated_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.updated_at).strftime('%Y/%m/%d')
+    
     class Meta:
         unique_together = ('user', 'article')
         verbose_name = _('rating')
@@ -215,6 +258,10 @@ class MediaCategory(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+    
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
     
     def __str__(self):
         return self.name
@@ -263,6 +310,20 @@ class BaseMedia(models.Model):
         if not self.slug:
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
+    
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+    
+    @property
+    def ir_updated_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.updated_at).strftime('%Y/%m/%d')
+    
+    @property
+    def ir_published_at(self):
+        if self.published_at:
+            return jdatetime.datetime.fromgregorian(datetime=self.published_at).strftime('%Y/%m/%d')
+        return None
     
     class Meta:
         abstract = True
@@ -371,6 +432,14 @@ class MediaComment(models.Model):
     updated_at = models.DateTimeField(_('تاریخ به‌روزرسانی'), auto_now=True)
     is_approved = models.BooleanField(_('تایید شده'), default=False)
     
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+    
+    @property
+    def ir_updated_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.updated_at).strftime('%Y/%m/%d')
+    
     def __str__(self):
         return f'نظر {self.author} در {self.content_object}'
     
@@ -397,6 +466,14 @@ class MediaRating(models.Model):
     )
     created_at = models.DateTimeField(_('تاریخ ایجاد'), auto_now_add=True)
     updated_at = models.DateTimeField(_('تاریخ به‌روزرسانی'), auto_now=True)
+    
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+    
+    @property
+    def ir_updated_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.updated_at).strftime('%Y/%m/%d')
     
     class Meta:
         unique_together = ('user', 'content_type', 'object_id')

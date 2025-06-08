@@ -8,12 +8,21 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.db import transaction
 from django.contrib.auth import get_user_model
+import jdatetime
 
 User = get_user_model()
 
 class AbstractBaseModel(models.Model):
     created_at = models.DateTimeField(_('تاریخ ایجاد'), auto_now_add=True)
     updated_at = models.DateTimeField(_('تاریخ به‌روزرسانی'), auto_now=True)
+
+    @property
+    def ir_created_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y/%m/%d')
+    
+    @property
+    def ir_updated_at(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.updated_at).strftime('%Y/%m/%d')
 
     class Meta:
         abstract = True
@@ -200,6 +209,16 @@ class LessonProgress(models.Model):
         blank=True
     )
 
+    @property
+    def ir_completion_date(self):
+        if self.completion_date:
+            return jdatetime.datetime.fromgregorian(datetime=self.completion_date).strftime('%Y/%m/%d')
+        return None
+    
+    @property
+    def ir_last_activity(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.last_activity).strftime('%Y/%m/%d')
+
     class Meta:
         ordering = ['lesson__chapter__order', 'lesson__order']
         verbose_name = _('پیشرفت درس')
@@ -361,6 +380,14 @@ class Discount(AbstractBaseModel):
     current_uses = models.PositiveIntegerField(_('تعداد استفاده فعلی'), default=0)
     min_course_price = models.DecimalField(_('حداقل قیمت دوره'), max_digits=10, decimal_places=2, null=True, blank=True)
 
+    @property
+    def ir_start_date(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.start_date).strftime('%Y/%m/%d')
+    
+    @property
+    def ir_end_date(self):
+        return jdatetime.datetime.fromgregorian(datetime=self.end_date).strftime('%Y/%m/%d')
+
     class Meta:
         verbose_name = _('تخفیف')
         verbose_name_plural = _('تخفیف‌ها')
@@ -420,6 +447,12 @@ class Enrollment(AbstractBaseModel):
                                      verbose_name=_('تخفیف استفاده شده'))
     status = models.CharField(_('وضعیت'), max_length=20, choices=STATUS_CHOICES, default='active')
     completion_date = models.DateTimeField(_('تاریخ تکمیل'), null=True, blank=True)
+
+    @property
+    def ir_completion_date(self):
+        if self.completion_date:
+            return jdatetime.datetime.fromgregorian(datetime=self.completion_date).strftime('%Y/%m/%d')
+        return None
 
     class Meta:
         unique_together = ['user', 'course']
@@ -506,3 +539,59 @@ class Comment(AbstractBaseModel):
 
     def get_replies(self):
         return Comment.objects.filter(parent=self)
+
+
+
+
+class CourseReview(models.Model):
+    approved_at = models.DateTimeField(null=True, blank=True, verbose_name="تاریخ تایید")
+    course = models.ForeignKey(
+        Course,  # 'app_name.ModelName' ساختار استاندارد
+        on_delete=models.CASCADE,
+        related_name='feedbacks',
+        verbose_name='دوره'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,  # اگر کاربری حذف شود، نظرات او هم حذف می‌شوند
+        verbose_name='کاربر'
+    )
+
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name='امتیاز (از ۱ تا ۵)'
+    )
+    comment = models.CharField(
+        max_length=500,
+        verbose_name='متن نظر'
+    )
+
+    is_approved = models.BooleanField(
+        default=False,
+        verbose_name='تایید شده'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='تاریخ ثبت'
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='تاریخ ویرایش'
+    )
+
+    class Meta:
+        verbose_name = 'نظر کاربر'
+        verbose_name_plural = 'نظرات کاربران'
+        ordering = ['-created_at'] # نظرات جدیدتر در ابتدا نمایش داده می‌شوند
+
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'course'], name='unique_review_per_user_course')
+        ]
+
+
+    def __str__(self):
+        return f'نظر {self.user.username} برای دوره {self.course.title}'
+
+

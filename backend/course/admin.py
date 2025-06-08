@@ -2,7 +2,29 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from unfold.admin import ModelAdmin, TabularInline, StackedInline
-from .models import Course, Chapter, Lesson, Discount, Enrollment, Comment
+from .models import Course, Chapter, Lesson, Discount, Enrollment, Comment, CourseReview
+
+
+
+
+@admin.register(CourseReview)
+class ReviewAdmin(ModelAdmin):
+
+    list_display = ('user', 'course', 'rating', 'is_approved', 'created_at')
+    list_filter = ('is_approved', 'rating', 'course')
+    search_fields = ('user__username', 'course__title', 'comment')
+    list_editable = ('is_approved',)
+
+    actions = ['approve_reviews']
+
+    def approve_reviews(self, request, queryset):
+        queryset.update(is_approved=True)
+
+    approve_reviews.short_description = "تایید نظرات انتخاب شده"
+
+    readonly_fields = ('created_at', 'updated_at')
+
+
 
 
 class CommentInline(TabularInline):
@@ -70,13 +92,22 @@ class DiscountInline(TabularInline):
     show_change_link = True
     tab = True
 
+
+class CourseReviewInline(TabularInline):
+    model = CourseReview
+    extra = 0
+    fields = ['user', 'rating', 'comment', 'is_approved', 'created_at', 'updated_at']
+    readonly_fields = ['user', 'rating', 'comment',  'created_at', 'updated_at']
+    verbose_name = _('Course Review')
+    verbose_name_plural = _('Course Reviews')
+
 @admin.register(Course)
 class CourseAdmin(ModelAdmin):
     list_display = ['title_with_thumbnail', 'instructor', 'price_display', 'is_free', 'status', 'created_at', 'students_count']
     list_filter = ['is_free', 'status', 'created_at', 'level']
     search_fields = ['title', 'description', 'instructor__email']
     prepopulated_fields = {'slug': ('title',)}
-    inlines = [ChapterInline, EnrollmentInline, DiscountInline, CommentInline]
+    inlines = [ChapterInline, EnrollmentInline, DiscountInline, CommentInline, CourseReviewInline]
     actions = ['make_published', 'make_draft']
     
     fieldsets = [
@@ -131,7 +162,8 @@ class CourseAdmin(ModelAdmin):
     def price_display(self, obj):
         if obj.is_free:
             return format_html('<span style="color: green; font-weight: bold;">{}</span>', _('رایگان'))
-        formatted_price = "{:,.0f}".format(float(obj.price))
+        # Format price with Persian locale
+        formatted_price = "{:,}".format(int(obj.price)).replace(',', '٬')
         return format_html('<span style="color: #e44d26; font-weight: bold;">{} تومان</span>', formatted_price)
     price_display.short_description = _('قیمت')
 
@@ -228,7 +260,9 @@ class EnrollmentAdmin(ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
 
     def payment_display(self, obj):
-        return format_html('{} {}', obj.price_paid, _('تومان'))
+        # Format payment amount with Persian locale
+        formatted_amount = "{:,}".format(int(obj.price_paid)).replace(',', '٬')
+        return format_html('{} {}', formatted_amount, _('تومان'))
     payment_display.short_description = _('مبلغ پرداخت شده')
 
     def discount_info(self, obj):

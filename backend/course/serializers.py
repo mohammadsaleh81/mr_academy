@@ -31,6 +31,8 @@ class LessonProgressSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     lesson_title = serializers.CharField(source='lesson.title', read_only=True)
     chapter_title = serializers.CharField(source='lesson.chapter.title', read_only=True)
+    completion_date = serializers.CharField(source='ir_completion_date', read_only=True)
+    last_activity = serializers.CharField(source='ir_last_activity', read_only=True)
     
     class Meta:
         model = LessonProgress
@@ -83,20 +85,24 @@ class LessonSerializer(serializers.ModelSerializer):
 class ChapterSerializer(serializers.ModelSerializer):
     lessons = LessonSerializer(many=True, read_only=True)
     total_duration = serializers.SerializerMethodField()
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    updated_at = serializers.CharField(source='ir_updated_at', read_only=True)
     
     class Meta:
         model = Chapter
-        fields = ['id', 'course', 'title', 'description', 'order', 'lessons', 'total_duration']
+        fields = ['id', 'course', 'title', 'description', 'order', 'lessons', 'total_duration', 'created_at', 'updated_at']
 
     def get_total_duration(self, obj):
         return obj.get_duration()
 
 class CourseRatingSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source='user.email', read_only=True)
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    updated_at = serializers.CharField(source='ir_updated_at', read_only=True)
     
     class Meta:
         model = CourseRating
-        fields = ['id', 'course', 'user_email', 'rating', 'comment', 'created_at']
+        fields = ['id', 'course', 'user_email', 'rating', 'comment', 'created_at', 'updated_at']
         read_only_fields = ['user']
 
     def create(self, validated_data):
@@ -104,12 +110,17 @@ class CourseRatingSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class DiscountSerializer(serializers.ModelSerializer):
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    updated_at = serializers.CharField(source='ir_updated_at', read_only=True)
+    start_date = serializers.CharField(source='ir_start_date', read_only=True)
+    end_date = serializers.CharField(source='ir_end_date', read_only=True)
+    
     class Meta:
         model = Discount
         fields = [
             'id', 'course', 'code', 'percentage', 'start_date',
             'end_date', 'is_active', 'max_uses', 'current_uses',
-            'min_course_price'
+            'min_course_price', 'created_at', 'updated_at'
         ]
 
     def validate(self, data):
@@ -122,12 +133,15 @@ class DiscountSerializer(serializers.ModelSerializer):
 class EnrollmentSerializer(serializers.ModelSerializer):
     course_title = serializers.CharField(source='course.title', read_only=True)
     progress_percentage = serializers.FloatField(source='get_progress_percentage', read_only=True)
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    updated_at = serializers.CharField(source='ir_updated_at', read_only=True)
+    completion_date = serializers.CharField(source='ir_completion_date', read_only=True)
     
     class Meta:
         model = Enrollment
         fields = [
             'id', 'user', 'course', 'course_title', 'price_paid',
-            'discount_used', 'status', 'created_at', 'completion_date',
+            'discount_used', 'status', 'created_at', 'updated_at', 'completion_date',
             'progress_percentage'
         ]
         read_only_fields = ['user', 'status', 'completion_date']
@@ -142,7 +156,8 @@ class CourseListSerializer(serializers.ModelSerializer):
     rating_avg = serializers.FloatField(source='get_average_rating', read_only=True)
     student_count = serializers.IntegerField(source='get_student_count', read_only=True)
     total_duration = serializers.IntegerField(source='get_total_duration', read_only=True)
-    created = serializers.SerializerMethodField()
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    updated_at = serializers.CharField(source='ir_updated_at', read_only=True)
     thumbnail = serializers.SerializerMethodField()
     is_enrolled = serializers.SerializerMethodField()
     progress_percentage = serializers.SerializerMethodField()
@@ -153,14 +168,11 @@ class CourseListSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'instructor_name', 'thumbnail',
             'price', 'is_free', 'status', 'level', 'tags',
             'rating_avg', 'student_count', 'total_duration',
-            'created', 'is_enrolled', 'progress_percentage'
+            'created_at', 'updated_at', 'is_enrolled', 'progress_percentage'
         ]
 
     def get_thumbnail(self, obj):
         return  'https://api.gport.sbs' + obj.thumbnail.url
-
-    def get_created(self, obj):
-        return obj.created_at.strftime('%Y-%m-%d')
 
     def get_is_enrolled(self, obj):
         request = self.context.get('request')
@@ -188,6 +200,8 @@ class CourseInfoSerializer(serializers.ModelSerializer):
     is_enrolled = serializers.SerializerMethodField()
     progress_percentage = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    updated_at = serializers.CharField(source='ir_updated_at', read_only=True)
 
     class Meta:
         model = Course
@@ -245,11 +259,12 @@ class CourseInfoSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     replies = serializers.SerializerMethodField()
-
-    created_at = serializers.SerializerMethodField()
+    created_at = serializers.CharField(source='ir_created_at', read_only=True)
+    updated_at = serializers.CharField(source='ir_updated_at', read_only=True)
+    
     class Meta:
         model = Comment
-        fields = ['id', 'user','content', 'replies','created_at']
+        fields = ['id', 'user','content', 'replies','created_at', 'updated_at']
 
     def get_replies(self, obj):
         if obj.replies.exists():
@@ -264,8 +279,6 @@ class CommentSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("پاسخ باید به نظری از همان مقاله باشد.")
         return value
 
-    def get_created_at(self, obj):
-        return obj.created_at.strftime('%Y-%m-%d %H:%M')
 class CourseDetailSerializer(serializers.Serializer):
     info = CourseInfoSerializer()
     chapters = ChapterSerializer(many=True, required=False)
